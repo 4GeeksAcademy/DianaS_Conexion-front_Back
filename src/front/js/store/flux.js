@@ -2,24 +2,11 @@ const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
 			message: null,
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			
 		},
+
+
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
-			},
 
 			getMessage: async () => {
 				try{
@@ -33,20 +20,62 @@ const getState = ({ getStore, getActions, setStore }) => {
 					console.log("Error loading message from backend", error)
 				}
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
+			login: async (email, password) => {
+                try {
+				const response = await fetch(`${process.env.BACKEND_URL}/api/login`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							email: email,
+							password: password
+						})
+					});
+					let data = await response.json()
+					if (response.status === 200) {
+						localStorage.setItem("token", data.access_token);
+						return true;
+					} else {
+						return false
+					}
+				} catch (error) {
+					return false;
+				}
+			},
+			logOut: () => {
+				localStorage.removeItem('token');
+				setStore({
+					favorites: [],
+					myVehicles: []
 				});
-
-				//reset the global store
-				setStore({ demo: demo });
-			}
+			},
+			signup: async (email, password) => {
+                try {
+					const response = await fetch(`${process.env.BACKEND_URL}/api/signup`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							email: email,
+							password: password
+						})
+					});
+					let data = await response.json()
+					if (response.status === 201) {
+						localStorage.setItem("token", data.access_token);
+						return "success";
+					} else if (response.status === 409) {
+						return "email_exist";
+					} else {
+						return "incomplete_data"
+					}
+				} catch (error) {
+					return false;
+				}
+			},
 		}
 	};
 };
